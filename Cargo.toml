@@ -1,0 +1,9 @@
+[package]
+authors = ["Taryn Hill <taryn@phrohdoh.com>"]
+name = "slp-viewer-opengl"
+version = "0.1.0"
+
+[dependencies]
+chariot_drs = "0.1"
+chariot_slp = "0.1"
+glium = "0.16.0"
