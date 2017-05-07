@@ -7,7 +7,7 @@ use glium::index::PrimitiveType;
 
 fn main() {
     use glium::DisplayBuild;
-    let display = glutin::WindowBuilder::new().build_glium().unwrap();
+    let display = glutin::WindowBuilder::new().with_title("slp-viewer-opengl").build_glium().unwrap();
 
     let vertex_buffer = {
         #[derive(Copy, Clone)]
