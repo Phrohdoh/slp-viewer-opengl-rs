@@ -74,7 +74,10 @@ fn main() {
 
         for event in display.poll_events() {
             match event {
-                glutin::Event::Closed => break 'main,
+                glutin::Event::Closed
+                | glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape))
+                | glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Q))
+                    => break 'main,
                 _ => ()
             }
         }
