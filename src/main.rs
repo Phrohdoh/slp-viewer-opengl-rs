@@ -20,14 +20,15 @@ fn main() {
 
         glium::VertexBuffer::new(&display,
             &[
-                Vertex { pos: [-0.5, -0.5], color: [0.0, 1.0, 0.0] },
-                Vertex { pos: [ 0.0,  0.5], color: [0.0, 0.0, 1.0] },
-                Vertex { pos: [ 0.5, -0.5], color: [1.0, 0.0, 0.0] },
+                Vertex { pos: [-1.0, 1.0], color: [1.0, 0.0, 0.0] },
+                Vertex { pos: [-1.0, 0.5], color: [0.0, 1.0, 0.0] },
+                Vertex { pos: [-0.5, 0.5], color: [0.0, 0.0, 1.0] },
+                Vertex { pos: [-0.5, 1.0], color: [0.5, 0.5, 0.5] },
             ]
         ).unwrap()
     };
 
-    let index_buffer = glium::IndexBuffer::new(&display, PrimitiveType::TrianglesList, &[0u16, 1, 2]).unwrap();
+    let index_buffer = glium::IndexBuffer::new(&display, PrimitiveType::TrianglesList, &[0u16, 1, 2, 0, 2, 3]).unwrap();
 
     let program = program!(&display,
         330 => {
