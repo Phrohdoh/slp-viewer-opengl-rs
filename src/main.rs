@@ -48,17 +48,18 @@ fn main() {
         #[derive(Copy, Clone)]
         struct Vertex {
             pos: [f32; 2],
+            uv: [f32; 2],
             color: [f32; 3],
         }
 
-        implement_vertex!(Vertex, pos, color);
+        implement_vertex!(Vertex, pos, uv, color);
 
         glium::VertexBuffer::new(&display,
             &[
-                Vertex { pos: [  0.0,   0.0], color: [1.0, 0.0, 0.0] },
-                Vertex { pos: [  0.0, 100.0], color: [0.0, 1.0, 0.0] },
-                Vertex { pos: [100.0, 100.0], color: [0.0, 0.0, 1.0] },
-                Vertex { pos: [100.0,   0.0], color: [0.5, 0.5, 0.5] },
+                Vertex { pos: [  0.0,   0.0], uv: [0.0, 0.0], color: [1.0, 0.0, 0.0] },
+                Vertex { pos: [  0.0, 100.0], uv: [0.0, 0.0], color: [0.0, 1.0, 0.0] },
+                Vertex { pos: [100.0, 100.0], uv: [0.0, 0.0], color: [0.0, 0.0, 1.0] },
+                Vertex { pos: [100.0,   0.0], uv: [0.0, 0.0], color: [0.5, 0.5, 0.5] },
             ]
         ).unwrap()
     };
@@ -76,18 +77,25 @@ fn main() {
             vertex: "#version 330
 
                 layout (location = 0) in vec2 pos;
-                layout (location = 1) in vec3 color;
+                layout (location = 1) in vec2 uv;
+                layout (location = 2) in vec3 color;
+
                 uniform mat4 mOrtho;
+
+                out vec2 vTexCoord;
                 out vec3 vColor;
 
                 void main() {
                     gl_Position = mOrtho * vec4(pos, 0.0, 1.0);
+
+                    vTexCoord = uv;
                     vColor = color;
                 }
             ",
 
             fragment: "#version 330
 
+                in vec2 vTexCoord;
                 in vec3 vColor;
                 out vec4 fColor;
 
