@@ -6,7 +6,7 @@ use glium::Surface;
 use glium::{IndexBuffer, VertexBuffer};
 use glium::index::PrimitiveType;
 use glium::texture::{SrgbTexture1d, UnsignedTexture2d, UncompressedUintFormat, MipmapsOption, SrgbFormat};
-use glium::uniforms::MagnifySamplerFilter;
+use glium::uniforms::{MinifySamplerFilter, MagnifySamplerFilter};
 
 struct M {
     m11: f32, m12: f32, m13: f32, m14: f32,
@@ -65,10 +65,10 @@ fn main() {
 
         fn create_quad(width: f32, height: f32) -> [Vertex; 4] {
             [
-                Vertex { pos: [  0.0,    0.0], uv: [0.0,      0.0] },
-                Vertex { pos: [  0.0, height], uv: [0.0,   height] },
-                Vertex { pos: [width, height], uv: [width, height] },
-                Vertex { pos: [width,    0.0], uv: [width,    0.0] },
+                Vertex { pos: [  0.0,    0.0], uv: [0.0, 0.0] },
+                Vertex { pos: [  0.0, height], uv: [0.0, 1.0] },
+                Vertex { pos: [width, height], uv: [1.0, 1.0] },
+                Vertex { pos: [width,    0.0], uv: [1.0, 0.0] },
             ]
         }
 
@@ -77,11 +77,11 @@ fn main() {
 
     let index_buffer = IndexBuffer::new(&display, PrimitiveType::TrianglesList, &[0u16, 1, 2, 0, 2, 3]).unwrap();
 
-    let pal: Vec<f32> = vec![
+    let pal = vec![
         255.0,   0.0,   0.0,
         255.0,   0.0, 255.0,
           0.0,   0.0, 255.0,
-        255.0, 255.0, 255.0,
+        255.0, 255.0, 255.0f32,
     ];
 
     let pal_tex = SrgbTexture1d::with_format(&display, pal, SrgbFormat::U8U8U8, MipmapsOption::NoMipmap).expect("Failed to create pal_tex");
@@ -97,8 +97,8 @@ fn main() {
 
     let uniforms = uniform! {
         mOrtho: ortho,
-        palette: pal_tex.sampled().magnify_filter(MagnifySamplerFilter::Nearest),
-        spriteData: sprite_data_tex.sampled().magnify_filter(MagnifySamplerFilter::Nearest),
+        palette: pal_tex.sampled().magnify_filter(MagnifySamplerFilter::Nearest).minify_filter(MinifySamplerFilter::Nearest),
+        spriteData: sprite_data_tex.sampled().magnify_filter(MagnifySamplerFilter::Nearest).minify_filter(MinifySamplerFilter::Nearest),
     };
 
     let program = program!(&display,
