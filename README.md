@@ -8,7 +8,7 @@ MIT
 
 ## Usage
 
-Assuming you have extracted an slp and a palette graphics.drs:
+Assuming you have extracted an SLP and a palette from graphics.drs:
 
 ```sh
 $ cargo run -- --pal-path ~/Desktop/50500.bin --player 1 --slp-path ~/Desktop/00412.slp
