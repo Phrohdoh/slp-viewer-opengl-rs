@@ -109,7 +109,7 @@ fn main() {
     use glium::DisplayBuild;
     let display = glutin::WindowBuilder::new()
         .with_title("slp-viewer-opengl")
-        .with_dimensions(1024, 768)
+        .with_dimensions(300, 300)
         .build_glium()
         .unwrap();
 
@@ -141,7 +141,7 @@ fn main() {
     let sprite_data: Vec<Vec<_>> = shape.pixels.chunks(shape.header.width as usize).map(|x| x.to_owned()).collect();
     let sprite_data_tex = UnsignedTexture2d::with_format(&display, sprite_data, UncompressedUintFormat::U8, MipmapsOption::NoMipmap).expect("Failed to create sprite_data_tex");
 
-    let ortho = M::ortho(0f32, 1024f32, 768f32, 0f32, 0f32, 1000f32);
+    let ortho = M::ortho(0f32, 300f32, 300f32, 0f32, 0f32, 1000f32);
 
     let uniforms = uniform! {
         mOrtho: ortho,
