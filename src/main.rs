@@ -74,7 +74,7 @@ fn main() {
             .takes_value(true))
         .get_matches();
 
-    let slp = {
+    let shape = {
         let slp_path = matches.value_of("slp-path").unwrap();
         let player_idx = {
             let v = matches.value_of("player").unwrap();
@@ -131,14 +131,14 @@ fn main() {
             ]
         }
 
-        VertexBuffer::new(&display, &create_quad(slp.header.width as f32, slp.header.height as f32)).unwrap()
+        VertexBuffer::new(&display, &create_quad(shape.header.width as f32, shape.header.height as f32)).unwrap()
     };
 
     let index_buffer = IndexBuffer::new(&display, PrimitiveType::TrianglesList, &[0u16, 1, 2, 0, 2, 3]).unwrap();
 
     let pal_tex = SrgbTexture1d::with_format(&display, pal, SrgbFormat::U8U8U8, MipmapsOption::NoMipmap).expect("Failed to create pal_tex");
 
-    let sprite_data: Vec<Vec<_>> = slp.pixels.chunks(slp.header.width as usize).map(|x| x.to_owned()).collect();
+    let sprite_data: Vec<Vec<_>> = shape.pixels.chunks(shape.header.width as usize).map(|x| x.to_owned()).collect();
     let sprite_data_tex = UnsignedTexture2d::with_format(&display, sprite_data, UncompressedUintFormat::U8, MipmapsOption::NoMipmap).expect("Failed to create sprite_data_tex");
 
     let ortho = M::ortho(0f32, 1024f32, 768f32, 0f32, 0f32, 1000f32);
