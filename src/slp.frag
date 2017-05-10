@@ -3,10 +3,12 @@
 in vec2 vTexCoord;
 out vec4 fColor;
 
-uniform sampler2D palette;
+uniform usampler2D spriteData;
+uniform sampler1D palette;
 
 void main() {
-    fColor = texture(palette, vTexCoord);
+    uint index = texture(spriteData, vTexCoord).r;
+    fColor = texelFetch(palette, int(index), 0);
 
     // An attempt at debugging.
     if (fColor.w == 0.0) {

@@ -5,7 +5,8 @@ use glium::glutin;
 use glium::Surface;
 use glium::{IndexBuffer, VertexBuffer};
 use glium::index::PrimitiveType;
-use glium::texture::{SrgbTexture2d, MipmapsOption, SrgbFormat};
+use glium::texture::{SrgbTexture1d, UnsignedTexture2d, UncompressedUintFormat, MipmapsOption, SrgbFormat};
+use glium::uniforms::MagnifySamplerFilter;
 
 struct M {
     m11: f32, m12: f32, m13: f32, m14: f32,
@@ -54,20 +55,20 @@ fn main() {
         #[derive(Copy, Clone)]
         struct Vertex {
             pos: [f32; 2],
-            //uv: [f32; 2],
+            uv: [f32; 2],
         }
 
         implement_vertex!(Vertex,
             pos,
-            //uv
+            uv
         );
 
         fn create_quad(width: f32, height: f32) -> [Vertex; 4] {
             [
-                Vertex { pos: [  0.0,    0.0], /*uv: [0.0, 0.0]*/ },
-                Vertex { pos: [  0.0, height], /*uv: [0.0, 0.0]*/ },
-                Vertex { pos: [width, height], /*uv: [0.0, 0.0]*/ },
-                Vertex { pos: [width,    0.0], /*uv: [0.0, 0.0]*/ },
+                Vertex { pos: [  0.0,    0.0], uv: [0.0,      0.0] },
+                Vertex { pos: [  0.0, height], uv: [0.0,   height] },
+                Vertex { pos: [width, height], uv: [width, height] },
+                Vertex { pos: [width,    0.0], uv: [width,    0.0] },
             ]
         }
 
@@ -83,13 +84,21 @@ fn main() {
         255.0, 255.0, 255.0,
     ];
 
-    let pal_tex = SrgbTexture2d::with_format(&display, vec![pal], SrgbFormat::U8U8U8, MipmapsOption::NoMipmap).expect("Failed to create pal_tex");
+    let pal_tex = SrgbTexture1d::with_format(&display, pal, SrgbFormat::U8U8U8, MipmapsOption::NoMipmap).expect("Failed to create pal_tex");
+
+    let sprite_data = vec![
+        vec![ 0, 3u8 ],
+        vec![ 2, 1u8 ],
+    ];
+
+    let sprite_data_tex = UnsignedTexture2d::with_format(&display, sprite_data, UncompressedUintFormat::U8, MipmapsOption::NoMipmap).expect("Failed to create sprite_data_tex");
 
     let ortho = M::ortho(0f32, 1024f32, 768f32, 0f32, 0f32, 1000f32);
 
     let uniforms = uniform! {
         mOrtho: ortho,
-        palette: pal_tex.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+        palette: pal_tex.sampled().magnify_filter(MagnifySamplerFilter::Nearest),
+        spriteData: sprite_data_tex.sampled().magnify_filter(MagnifySamplerFilter::Nearest),
     };
 
     let program = program!(&display,
