@@ -8,6 +8,12 @@ use glium::index::PrimitiveType;
 use glium::texture::{SrgbTexture1d, UnsignedTexture2d, UncompressedUintFormat, MipmapsOption, SrgbFormat};
 use glium::uniforms::{MinifySamplerFilter, MagnifySamplerFilter};
 
+extern crate clap;
+use clap::{App, Arg};
+
+extern crate chariot_palette;
+extern crate chariot_slp;
+
 struct M {
     m11: f32, m12: f32, m13: f32, m14: f32,
     m21: f32, m22: f32, m23: f32, m24: f32,
@@ -44,6 +50,62 @@ impl M {
 }
 
 fn main() {
+    let matches = App::new("drs_extractor")
+        .version("0.1.0")
+        .author("Taryn Hill <taryn@phrohdoh.com>")
+        .about("Extract files from a DRS archive")
+        .arg(Arg::with_name("slp-path")
+            .long("slp-path")
+            .value_name("slp-path")
+            .help("Filepath to the SLP to convert to PNGs")
+            .required(true)
+            .takes_value(true))
+        .arg(Arg::with_name("pal-path")
+            .long("pal-path")
+            .value_name("pal-path")
+            .help("Filepath to the palette (bin) to use")
+            .required(true)
+            .takes_value(true))
+        .arg(Arg::with_name("player")
+            .long("player")
+            .value_name("a value ranging from 1 to 8")
+            .help("Player remap index (1..8)")
+            .required(true)
+            .takes_value(true))
+        .get_matches();
+
+    let slp = {
+        let slp_path = matches.value_of("slp-path").unwrap();
+        let player_idx = {
+            let v = matches.value_of("player").unwrap();
+            let v = v.parse::<u8>().expect(&format!("Failed to parse {} into an integer value ranging from 1 to 8", v));
+
+            if v > 8 {
+                8
+            } else if v == 0 {
+                1
+            } else {
+                v
+            }
+        };
+
+        chariot_slp::SlpFile::read_from_file(slp_path, player_idx).expect(&format!("Failed to read SLP from {}", slp_path)).shapes.swap_remove(0)
+    };
+
+    let pal = {
+        let pal_path = matches.value_of("pal-path").unwrap();
+        let colors = chariot_palette::read_from_file(pal_path).expect(&format!("Failed to read palette from {}", pal_path));
+        let mut rgb = vec![0u8; colors.len() * 3];
+
+        for (index, color) in colors.iter().enumerate() {
+            rgb[index * 3] = color.r;
+            rgb[index * 3 + 1] = color.g;
+            rgb[index * 3 + 2] = color.b;
+        }
+
+        rgb
+    };
+
     use glium::DisplayBuild;
     let display = glutin::WindowBuilder::new()
         .with_title("slp-viewer-opengl")
@@ -58,10 +120,7 @@ fn main() {
             uv: [f32; 2],
         }
 
-        implement_vertex!(Vertex,
-            pos,
-            uv
-        );
+        implement_vertex!(Vertex, pos, uv);
 
         fn create_quad(width: f32, height: f32) -> [Vertex; 4] {
             [
@@ -72,25 +131,14 @@ fn main() {
             ]
         }
 
-        VertexBuffer::new(&display, &create_quad(2f32, 2f32)).unwrap()
+        VertexBuffer::new(&display, &create_quad(slp.header.width as f32, slp.header.height as f32)).unwrap()
     };
 
     let index_buffer = IndexBuffer::new(&display, PrimitiveType::TrianglesList, &[0u16, 1, 2, 0, 2, 3]).unwrap();
 
-    let pal = vec![
-        255.0,   0.0,   0.0,
-        255.0,   0.0, 255.0,
-          0.0,   0.0, 255.0,
-        255.0, 255.0, 255.0f32,
-    ];
-
     let pal_tex = SrgbTexture1d::with_format(&display, pal, SrgbFormat::U8U8U8, MipmapsOption::NoMipmap).expect("Failed to create pal_tex");
 
-    let sprite_data = vec![
-        vec![ 0, 3u8 ],
-        vec![ 2, 1u8 ],
-    ];
-
+    let sprite_data: Vec<Vec<_>> = slp.pixels.chunks(slp.header.width as usize).map(|x| x.to_owned()).collect();
     let sprite_data_tex = UnsignedTexture2d::with_format(&display, sprite_data, UncompressedUintFormat::U8, MipmapsOption::NoMipmap).expect("Failed to create sprite_data_tex");
 
     let ortho = M::ortho(0f32, 1024f32, 768f32, 0f32, 0f32, 1000f32);
