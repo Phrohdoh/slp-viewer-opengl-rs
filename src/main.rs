@@ -50,14 +50,14 @@ impl M {
 }
 
 fn main() {
-    let matches = App::new("drs_extractor")
+    let matches = App::new("slp-viewer-opengl")
         .version("0.1.0")
         .author("Taryn Hill <taryn@phrohdoh.com>")
-        .about("Extract files from a DRS archive")
+        .about("Render an SLP via OpenGL")
         .arg(Arg::with_name("slp-path")
             .long("slp-path")
             .value_name("slp-path")
-            .help("Filepath to the SLP to convert to PNGs")
+            .help("Filepath to the SLP")
             .required(true)
             .takes_value(true))
         .arg(Arg::with_name("pal-path")
