@@ -9,5 +9,13 @@ out vec4 color;
 
 void main() {
     uint index = texture(spriteData, vTexCoord).r;
-    color = texelFetch(palette, int(index), 0);
+    int i = int(index);
+
+    if (i == 0) {
+        discard;
+    } else if (i == 1) {
+        color = vec4(0.0, 0.0, 0.0, 0.75);
+    } else {
+        color = texelFetch(palette, i, 0);
+    }
 }

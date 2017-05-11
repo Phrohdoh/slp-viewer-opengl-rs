@@ -96,6 +96,12 @@ fn main() {
                  .help("Player remap index (1..8)")
                  .required(true)
                  .takes_value(true))
+        .arg(Arg::with_name("frame-index")
+                 .long("frame-index")
+                 .value_name("frame-index")
+                 .help("A value ranging from 0 to <frame count - 1>")
+                 .required(true)
+                 .takes_value(true))
         .get_matches();
 
     let shape = {
@@ -103,8 +109,7 @@ fn main() {
         let player_idx = {
             let v = matches.value_of("player").unwrap();
             let v = v.parse::<u8>()
-                .expect(&format!("Failed to parse {} into an integer value ranging from 1 to 8",
-                                 v));
+                .expect(&format!("Failed to parse {} into an integer value ranging from 1 to 8", v));
 
             if v > 8 {
                 8
@@ -115,10 +120,23 @@ fn main() {
             }
         };
 
-        chariot_slp::SlpFile::read_from_file(slp_path, player_idx)
-            .expect(&format!("Failed to read SLP from {}", slp_path))
-            .shapes
-            .swap_remove(0)
+        let mut slp = chariot_slp::SlpFile::read_from_file(slp_path, player_idx)
+            .expect(&format!("Failed to read SLP from {}", slp_path));
+    
+        let frame_idx = {
+            let max = (slp.shapes.len() - 1) as u8;
+            let v = matches.value_of("frame-index").unwrap();
+            let v = v.parse::<u8>()
+                .expect(&format!("Failed to parse {} into an integer value ranging from 0 to {}", v, max));
+
+            if v > max {
+                max
+            } else {
+                v
+            }
+        };
+
+        slp.shapes.swap_remove(frame_idx as usize)
     };
 
     let pal = {
@@ -182,15 +200,20 @@ fn main() {
 
     let program = program!(&display, 330 => { vertex: include_str!("slp.vert"), fragment: include_str!("slp.frag"), }).unwrap();
 
+    let draw_params = glium::DrawParameters {
+        blend: glium::Blend::alpha_blending(),
+        .. Default::default()
+    };
+
     'main: loop {
         let mut target = display.draw();
-        target.clear_color(0.0, 0.0, 0.0, 1.0);
+        target.clear_color(0.0, 1.0, 0.0, 1.0);
         target
             .draw(&vertex_buffer,
                   &index_buffer,
                   &program,
                   &uniforms,
-                  &Default::default())
+                  &draw_params)
             .unwrap();
         target.finish().unwrap();
 
