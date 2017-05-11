@@ -123,16 +123,17 @@ fn main() {
 
         implement_vertex!(Vertex, pos, uv);
 
-        fn create_quad(width: f32, height: f32) -> [Vertex; 4] {
+        // dimensions are in world-space
+        fn create_quad(x: f32, y: f32, width: f32, height: f32) -> [Vertex; 4] {
             [
-                Vertex { pos: [  0.0,    0.0], uv: [0.0, 0.0] },
-                Vertex { pos: [  0.0, height], uv: [0.0, 1.0] },
-                Vertex { pos: [width, height], uv: [1.0, 1.0] },
-                Vertex { pos: [width,    0.0], uv: [1.0, 0.0] },
+                Vertex { pos: [x +   0.0, y +    0.0], uv: [0.0, 0.0] },
+                Vertex { pos: [x +   0.0, y + height], uv: [0.0, 1.0] },
+                Vertex { pos: [x + width, y + height], uv: [1.0, 1.0] },
+                Vertex { pos: [x + width, y +    0.0], uv: [1.0, 0.0] },
             ]
         }
 
-        VertexBuffer::new(&display, &create_quad(shape.header.width as f32, shape.header.height as f32)).unwrap()
+        VertexBuffer::new(&display, &create_quad(0.0, 0.0, shape.header.width as f32, shape.header.height as f32)).unwrap()
     };
 
     let index_buffer = IndexBuffer::new(&display, PrimitiveType::TrianglesList, &[0u16, 1, 2, 0, 2, 3]).unwrap();
