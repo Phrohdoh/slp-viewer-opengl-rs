@@ -95,12 +95,10 @@ fn main() {
     let pal = {
         let pal_path = matches.value_of("pal-path").unwrap();
         let colors = chariot_palette::read_from_file(pal_path).expect(&format!("Failed to read palette from {}", pal_path));
-        let mut rgb = vec![0u8; colors.len() * 3];
 
+        let mut rgb = vec![(0u8, 0u8, 0u8); colors.len()];
         for (index, color) in colors.iter().enumerate() {
-            rgb[index * 3] = color.r;
-            rgb[index * 3 + 1] = color.g;
-            rgb[index * 3 + 2] = color.b;
+            rgb[index] = (color.r, color.g, color.b);
         }
 
         rgb
