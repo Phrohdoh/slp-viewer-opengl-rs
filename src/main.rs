@@ -52,6 +52,24 @@ impl M {
 const WIDTH: u32 = 1024;
 const HEIGHT: u32 = 768;
 
+#[derive(Copy, Clone)]
+struct Vertex {
+    pos: [f32; 2],
+    uv: [f32; 2],
+}
+
+implement_vertex!(Vertex, pos, uv);
+
+// dimensions are in world-space
+fn create_quad(x: f32, y: f32, width: f32, height: f32) -> [Vertex; 4] {
+    [
+        Vertex { pos: [x +   0.0, y +    0.0], uv: [0.0, 0.0] },
+        Vertex { pos: [x +   0.0, y + height], uv: [0.0, 1.0] },
+        Vertex { pos: [x + width, y + height], uv: [1.0, 1.0] },
+        Vertex { pos: [x + width, y +    0.0], uv: [1.0, 0.0] },
+    ]
+}
+
 fn main() {
     let matches = App::new("slp-viewer-opengl")
         .version("0.1.0")
@@ -114,49 +132,23 @@ fn main() {
         .build_glium()
         .unwrap();
 
-    let vertex_buffer = {
-        #[derive(Copy, Clone)]
-        struct Vertex {
-            pos: [f32; 2],
-            uv: [f32; 2],
-        }
-
-        implement_vertex!(Vertex, pos, uv);
-
-        // dimensions are in world-space
-        fn create_quad(x: f32, y: f32, width: f32, height: f32) -> [Vertex; 4] {
-            [
-                Vertex { pos: [x +   0.0, y +    0.0], uv: [0.0, 0.0] },
-                Vertex { pos: [x +   0.0, y + height], uv: [0.0, 1.0] },
-                Vertex { pos: [x + width, y + height], uv: [1.0, 1.0] },
-                Vertex { pos: [x + width, y +    0.0], uv: [1.0, 0.0] },
-            ]
-        }
-
-        VertexBuffer::new(&display, &create_quad(0.0, 0.0, shape.header.width as f32, shape.header.height as f32)).unwrap()
+    let tex_palette = SrgbTexture1d::with_format(&display, pal, SrgbFormat::U8U8U8, MipmapsOption::NoMipmap).expect("Failed to create pal_tex");
+    let tex_sprite = {
+        let sprite_data: Vec<Vec<_>> = shape.pixels.chunks(shape.header.width as usize).map(|x| x.to_owned()).collect();
+        UnsignedTexture2d::with_format(&display, sprite_data, UncompressedUintFormat::U8, MipmapsOption::NoMipmap).expect("Failed to create sprite_data_tex")
     };
-
-    let index_buffer = IndexBuffer::new(&display, PrimitiveType::TrianglesList, &[0u16, 1, 2, 0, 2, 3]).unwrap();
-
-    let pal_tex = SrgbTexture1d::with_format(&display, pal, SrgbFormat::U8U8U8, MipmapsOption::NoMipmap).expect("Failed to create pal_tex");
-
-    let sprite_data: Vec<Vec<_>> = shape.pixels.chunks(shape.header.width as usize).map(|x| x.to_owned()).collect();
-    let sprite_data_tex = UnsignedTexture2d::with_format(&display, sprite_data, UncompressedUintFormat::U8, MipmapsOption::NoMipmap).expect("Failed to create sprite_data_tex");
 
     let ortho = M::ortho(0f32, WIDTH as f32, HEIGHT as f32, 0f32, 0f32, 1000f32);
 
     let uniforms = uniform! {
         mOrtho: ortho,
-        palette: pal_tex.sampled().magnify_filter(MagnifySamplerFilter::Nearest).minify_filter(MinifySamplerFilter::Nearest),
-        spriteData: sprite_data_tex.sampled().magnify_filter(MagnifySamplerFilter::Nearest).minify_filter(MinifySamplerFilter::Nearest),
+        palette: tex_palette.sampled().magnify_filter(MagnifySamplerFilter::Nearest).minify_filter(MinifySamplerFilter::Nearest),
+        spriteData: tex_sprite.sampled().magnify_filter(MagnifySamplerFilter::Nearest).minify_filter(MinifySamplerFilter::Nearest),
     };
 
-    let program = program!(&display,
-        330 => {
-            vertex: include_str!("slp.vert"),
-            fragment: include_str!("slp.frag"),
-        }
-    ).unwrap();
+    let vertex_buffer = VertexBuffer::new(&display, &create_quad(0.0, 0.0, shape.header.width as f32, shape.header.height as f32)).unwrap();
+    let index_buffer = IndexBuffer::new(&display, PrimitiveType::TrianglesList, &[0u16, 1, 2, 0, 2, 3]).unwrap();
+    let program = program!(&display, 330 => { vertex: include_str!("slp.vert"), fragment: include_str!("slp.frag"), }).unwrap();
 
     'main: loop {
         let mut target = display.draw();
