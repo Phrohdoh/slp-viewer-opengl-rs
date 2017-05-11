@@ -5,7 +5,8 @@ use glium::glutin;
 use glium::Surface;
 use glium::{IndexBuffer, VertexBuffer};
 use glium::index::PrimitiveType;
-use glium::texture::{SrgbTexture1d, UnsignedTexture2d, UncompressedUintFormat, MipmapsOption, SrgbFormat};
+use glium::texture::{SrgbTexture1d, UnsignedTexture2d, UncompressedUintFormat, MipmapsOption,
+                     SrgbFormat};
 use glium::uniforms::{MinifySamplerFilter, MagnifySamplerFilter};
 
 extern crate clap;
@@ -31,7 +32,13 @@ impl M {
         }
     }
 
-    pub fn ortho(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32) -> [[f32; 4]; 4] {
+    pub fn ortho(left: f32,
+                 right: f32,
+                 bottom: f32,
+                 top: f32,
+                 near: f32,
+                 far: f32)
+                 -> [[f32; 4]; 4] {
         let mut m = Self::identity();
         m.m11 = 2.0 / (right - left);
         m.m22 = 2.0 / (top - bottom);
@@ -40,12 +47,10 @@ impl M {
         m.m42 = -((top + bottom) / (top - bottom));
         m.m43 = -((far + near) / (far - near));
 
-        [
-            [m.m11, m.m12, m.m13, m.m14],
-            [m.m21, m.m22, m.m23, m.m24],
-            [m.m31, m.m32, m.m33, m.m34],
-            [m.m41, m.m42, m.m43, m.m44],
-        ]
+        [[m.m11, m.m12, m.m13, m.m14],
+         [m.m21, m.m22, m.m23, m.m24],
+         [m.m31, m.m32, m.m33, m.m34],
+         [m.m41, m.m42, m.m43, m.m44]]
     }
 }
 
@@ -62,12 +67,10 @@ implement_vertex!(Vertex, pos, uv);
 
 // dimensions are in world-space
 fn create_quad(x: f32, y: f32, width: f32, height: f32) -> [Vertex; 4] {
-    [
-        Vertex { pos: [x +   0.0, y +    0.0], uv: [0.0, 0.0] },
-        Vertex { pos: [x +   0.0, y + height], uv: [0.0, 1.0] },
-        Vertex { pos: [x + width, y + height], uv: [1.0, 1.0] },
-        Vertex { pos: [x + width, y +    0.0], uv: [1.0, 0.0] },
-    ]
+    [Vertex { pos: [x + 0.0,   y +    0.0], uv: [0.0, 0.0], },
+     Vertex { pos: [x + 0.0,   y + height], uv: [0.0, 1.0], },
+     Vertex { pos: [x + width, y + height], uv: [1.0, 1.0], },
+     Vertex { pos: [x + width, y +    0.0], uv: [1.0, 0.0], }]
 }
 
 fn main() {
@@ -76,30 +79,32 @@ fn main() {
         .author("Taryn Hill <taryn@phrohdoh.com>")
         .about("Render an SLP via OpenGL")
         .arg(Arg::with_name("slp-path")
-            .long("slp-path")
-            .value_name("slp-path")
-            .help("Filepath to the SLP")
-            .required(true)
-            .takes_value(true))
+                 .long("slp-path")
+                 .value_name("slp-path")
+                 .help("Filepath to the SLP")
+                 .required(true)
+                 .takes_value(true))
         .arg(Arg::with_name("pal-path")
-            .long("pal-path")
-            .value_name("pal-path")
-            .help("Filepath to the palette (bin) to use")
-            .required(true)
-            .takes_value(true))
+                 .long("pal-path")
+                 .value_name("pal-path")
+                 .help("Filepath to the palette (bin) to use")
+                 .required(true)
+                 .takes_value(true))
         .arg(Arg::with_name("player")
-            .long("player")
-            .value_name("a value ranging from 1 to 8")
-            .help("Player remap index (1..8)")
-            .required(true)
-            .takes_value(true))
+                 .long("player")
+                 .value_name("a value ranging from 1 to 8")
+                 .help("Player remap index (1..8)")
+                 .required(true)
+                 .takes_value(true))
         .get_matches();
 
     let shape = {
         let slp_path = matches.value_of("slp-path").unwrap();
         let player_idx = {
             let v = matches.value_of("player").unwrap();
-            let v = v.parse::<u8>().expect(&format!("Failed to parse {} into an integer value ranging from 1 to 8", v));
+            let v = v.parse::<u8>()
+                .expect(&format!("Failed to parse {} into an integer value ranging from 1 to 8",
+                                 v));
 
             if v > 8 {
                 8
@@ -110,7 +115,10 @@ fn main() {
             }
         };
 
-        chariot_slp::SlpFile::read_from_file(slp_path, player_idx).expect(&format!("Failed to read SLP from {}", slp_path)).shapes.swap_remove(0)
+        chariot_slp::SlpFile::read_from_file(slp_path, player_idx)
+            .expect(&format!("Failed to read SLP from {}", slp_path))
+            .shapes
+            .swap_remove(0)
     };
 
     let pal = {
@@ -132,37 +140,66 @@ fn main() {
         .build_glium()
         .unwrap();
 
-    let tex_palette = SrgbTexture1d::with_format(&display, pal, SrgbFormat::U8U8U8, MipmapsOption::NoMipmap).expect("Failed to create pal_tex");
+    let tex_palette =
+        SrgbTexture1d::with_format(&display, pal, SrgbFormat::U8U8U8, MipmapsOption::NoMipmap)
+            .expect("Failed to create pal_tex");
+
     let tex_sprite = {
-        let sprite_data: Vec<Vec<_>> = shape.pixels.chunks(shape.header.width as usize).map(|x| x.to_owned()).collect();
-        UnsignedTexture2d::with_format(&display, sprite_data, UncompressedUintFormat::U8, MipmapsOption::NoMipmap).expect("Failed to create sprite_data_tex")
+        let sprite_data: Vec<Vec<_>> = shape
+            .pixels
+            .chunks(shape.header.width as usize)
+            .map(|x| x.to_owned())
+            .collect();
+
+        UnsignedTexture2d::with_format(&display,
+                                       sprite_data,
+                                       UncompressedUintFormat::U8,
+                                       MipmapsOption::NoMipmap)
+                .expect("Failed to create sprite_data_tex")
     };
 
     let ortho = M::ortho(0f32, WIDTH as f32, HEIGHT as f32, 0f32, 0f32, 1000f32);
 
     let uniforms = uniform! {
         mOrtho: ortho,
-        palette: tex_palette.sampled().magnify_filter(MagnifySamplerFilter::Nearest).minify_filter(MinifySamplerFilter::Nearest),
-        spriteData: tex_sprite.sampled().magnify_filter(MagnifySamplerFilter::Nearest).minify_filter(MinifySamplerFilter::Nearest),
+        palette: tex_palette.sampled()
+            .magnify_filter(MagnifySamplerFilter::Nearest)
+            .minify_filter(MinifySamplerFilter::Nearest),
+        spriteData: tex_sprite.sampled()
+            .magnify_filter(MagnifySamplerFilter::Nearest)
+            .minify_filter(MinifySamplerFilter::Nearest),
     };
 
-    let vertex_buffer = VertexBuffer::new(&display, &create_quad(0.0, 0.0, shape.header.width as f32, shape.header.height as f32)).unwrap();
-    let index_buffer = IndexBuffer::new(&display, PrimitiveType::TrianglesList, &[0u16, 1, 2, 0, 2, 3]).unwrap();
+    let vertex_buffer = VertexBuffer::new(&display,
+                                          &create_quad(0.0,
+                                                       0.0,
+                                                       shape.header.width as f32,
+                                                       shape.header.height as f32)).unwrap();
+
+    let index_buffer = IndexBuffer::new(&display,
+                                        PrimitiveType::TrianglesList,
+                                        &[0u16, 1, 2, 0, 2, 3]).unwrap();
+
     let program = program!(&display, 330 => { vertex: include_str!("slp.vert"), fragment: include_str!("slp.frag"), }).unwrap();
 
     'main: loop {
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 0.0, 1.0);
-        target.draw(&vertex_buffer, &index_buffer, &program, &uniforms, &Default::default()).unwrap();
+        target
+            .draw(&vertex_buffer,
+                  &index_buffer,
+                  &program,
+                  &uniforms,
+                  &Default::default())
+            .unwrap();
         target.finish().unwrap();
 
         for event in display.poll_events() {
             match event {
-                glutin::Event::Closed
-                | glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape))
-                | glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Q))
-                    => break 'main,
-                _ => ()
+                glutin::Event::Closed |
+                glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) |
+                glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Q)) => break 'main,
+                _ => (),
             }
         }
     }
