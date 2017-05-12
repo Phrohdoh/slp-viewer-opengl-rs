@@ -9,6 +9,7 @@ use glium::texture::{SrgbTexture1d, UnsignedTexture2d, UncompressedUintFormat, M
                      SrgbFormat};
 use glium::uniforms::{MinifySamplerFilter, MagnifySamplerFilter};
 
+#[macro_use(value_t)]
 extern crate clap;
 use clap::{App, Arg};
 
@@ -73,52 +74,68 @@ fn create_quad(x: f32, y: f32, width: f32, height: f32) -> [Vertex; 4] {
      Vertex { pos: [x + width, y +    0.0], uv: [1.0, 0.0], }]
 }
 
+fn validate_file_exists(path: String) -> Result<(), String> {
+    if std::path::Path::new(&path).exists() {
+        Ok(())
+    } else {
+        Err(format!("{} does not exist", path))
+    }
+}
+
 fn main() {
     let matches = App::new("slp-viewer-opengl")
         .version("0.1.0")
         .author("Taryn Hill <taryn@phrohdoh.com>")
         .about("Render an SLP via OpenGL")
         .arg(Arg::with_name("slp-path")
+                 .validator(validate_file_exists)
+                 .display_order(1)
                  .long("slp-path")
-                 .value_name("slp-path")
                  .help("Filepath to the SLP")
                  .required(true)
                  .takes_value(true))
         .arg(Arg::with_name("pal-path")
+                 .validator(validate_file_exists)
+                 .display_order(2)
                  .long("pal-path")
-                 .value_name("pal-path")
                  .help("Filepath to the palette (bin) to use")
                  .required(true)
                  .takes_value(true))
+        .arg(Arg::with_name("frame-index")
+                 .display_order(3)
+                 .long("frame-index")
+                 .help("A value ranging from 0 to <frame count - 1>")
+                 .required(true)
+                 .takes_value(true))
         .arg(Arg::with_name("player")
+                 .display_order(4)
                  .long("player")
-                 .value_name("a value ranging from 1 to 8")
-                 .help("Player remap index (1..8)")
+                 .help("Player number")
+                 .possible_values(&["1", "2", "3", "4", "5", "6", "7", "8"])
                  .required(true)
                  .takes_value(true))
         .get_matches();
 
     let shape = {
         let slp_path = matches.value_of("slp-path").unwrap();
-        let player_idx = {
-            let v = matches.value_of("player").unwrap();
-            let v = v.parse::<u8>()
-                .expect(&format!("Failed to parse {} into an integer value ranging from 1 to 8",
-                                 v));
+        let player_idx = value_t!(matches, "player", u8).unwrap();
 
-            if v > 8 {
-                8
-            } else if v == 0 {
-                1
+        let mut slp = chariot_slp::SlpFile::read_from_file(slp_path, player_idx)
+            .expect(&format!("Failed to read SLP from {}", slp_path));
+
+        let frame_idx = {
+            let max = (slp.shapes.len() - 1) as u8;
+            let v = value_t!(matches, "frame-index", u8)
+                .expect(&format!("Failed to parse frame-index into an integer value ranging from 0 to {}", max));
+
+            if v > max {
+                max
             } else {
                 v
             }
         };
 
-        chariot_slp::SlpFile::read_from_file(slp_path, player_idx)
-            .expect(&format!("Failed to read SLP from {}", slp_path))
-            .shapes
-            .swap_remove(0)
+        slp.shapes.swap_remove(frame_idx as usize)
     };
 
     let pal = {
@@ -142,7 +159,7 @@ fn main() {
 
     let tex_palette =
         SrgbTexture1d::with_format(&display, pal, SrgbFormat::U8U8U8, MipmapsOption::NoMipmap)
-            .expect("Failed to create pal_tex");
+            .expect("Failed to create tex_palette");
 
     let tex_sprite = {
         let sprite_data: Vec<Vec<_>> = shape
@@ -155,7 +172,7 @@ fn main() {
                                        sprite_data,
                                        UncompressedUintFormat::U8,
                                        MipmapsOption::NoMipmap)
-                .expect("Failed to create sprite_data_tex")
+                .expect("Failed to create tex_sprite")
     };
 
     let ortho = M::ortho(0f32, WIDTH as f32, HEIGHT as f32, 0f32, 0f32, 1000f32);
