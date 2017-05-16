@@ -102,6 +102,9 @@ fn main() {
                  .help("A value ranging from 0 to <frame count - 1>")
                  .required(true)
                  .takes_value(true))
+        .arg(Arg::with_name("debug")
+                 .long("debug")
+                 .help("In debug mode pixels are rendered as (palette-index, 0, 0)"))
         .get_matches();
 
     let shape = {
@@ -186,6 +189,7 @@ fn main() {
         spriteData: tex_sprite.sampled()
             .magnify_filter(MagnifySamplerFilter::Nearest)
             .minify_filter(MinifySamplerFilter::Nearest),
+        isDebug: matches.is_present("debug"),
     };
 
     let vertex_buffer = VertexBuffer::new(&display,
