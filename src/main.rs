@@ -15,6 +15,8 @@ use clap::{App, Arg};
 extern crate chariot_palette;
 extern crate chariot_slp;
 
+mod data;
+
 struct M {
     m11: f32, m12: f32, m13: f32, m14: f32,
     m21: f32, m22: f32, m23: f32, m24: f32,
@@ -56,22 +58,6 @@ impl M {
 
 const WIDTH: u32 = 1024;
 const HEIGHT: u32 = 768;
-
-#[derive(Copy, Clone)]
-struct Vertex {
-    pos: [f32; 2],
-    uv: [f32; 2],
-}
-
-implement_vertex!(Vertex, pos, uv);
-
-// dimensions are in world-space
-fn create_quad(x: f32, y: f32, width: f32, height: f32) -> [Vertex; 4] {
-    [Vertex { pos: [x + 0.0,   y +    0.0], uv: [0.0, 0.0], },
-     Vertex { pos: [x + 0.0,   y + height], uv: [0.0, 1.0], },
-     Vertex { pos: [x + width, y + height], uv: [1.0, 1.0], },
-     Vertex { pos: [x + width, y +    0.0], uv: [1.0, 0.0], }]
-}
 
 fn main() {
     let matches = App::new("slp-viewer-opengl")
@@ -163,21 +149,9 @@ fn main() {
 
     let tex_palette =
         SrgbTexture1d::with_format(&display, pal, SrgbFormat::U8U8U8, MipmapsOption::NoMipmap)
-            .expect("Failed to create pal_tex");
+            .expect("Failed to create tex_palette");
 
-    let tex_sprite = {
-        let sprite_data: Vec<Vec<_>> = shape
-            .pixels
-            .chunks(shape.header.width as usize)
-            .map(|x| x.to_owned())
-            .collect();
-
-        UnsignedTexture2d::with_format(&display,
-                                       sprite_data,
-                                       UncompressedUintFormat::U8,
-                                       MipmapsOption::NoMipmap)
-                .expect("Failed to create sprite_data_tex")
-    };
+    let sprite_tex_geo = data::TexturedGeometry::from_shape(&display, shape);
 
     let ortho = M::ortho(0f32, WIDTH as f32, HEIGHT as f32, 0f32, 0f32, 1000f32);
 
@@ -186,17 +160,13 @@ fn main() {
         palette: tex_palette.sampled()
             .magnify_filter(MagnifySamplerFilter::Nearest)
             .minify_filter(MinifySamplerFilter::Nearest),
-        spriteData: tex_sprite.sampled()
+        spriteData: sprite_tex_geo.tex.sampled()
             .magnify_filter(MagnifySamplerFilter::Nearest)
             .minify_filter(MinifySamplerFilter::Nearest),
         isDebug: matches.is_present("debug"),
     };
 
-    let vertex_buffer = VertexBuffer::new(&display,
-                                          &create_quad(0.0,
-                                                       0.0,
-                                                       shape.header.width as f32,
-                                                       shape.header.height as f32)).unwrap();
+    let vertex_buffer = VertexBuffer::new(&display, &sprite_tex_geo.geo.into_vertices()).unwrap();
 
     let index_buffer = IndexBuffer::new(&display,
                                         PrimitiveType::TrianglesList,
