@@ -100,7 +100,7 @@ fn main() {
                  .long("frame-index")
                  .value_name("frame-index")
                  .help("A value ranging from 0 to <frame count - 1>")
-                 .required(true)
+                 .default_value("0")
                  .takes_value(true))
         .arg(Arg::with_name("debug")
                  .long("debug")
