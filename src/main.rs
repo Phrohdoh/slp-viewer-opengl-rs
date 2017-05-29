@@ -147,23 +147,15 @@ fn main() {
         .build_glium()
         .unwrap();
 
-    let tex_palette =
-        SrgbTexture1d::with_format(&display, pal, SrgbFormat::U8U8U8, MipmapsOption::NoMipmap)
-            .expect("Failed to create tex_palette");
-
-    let sprite_tex_geo = data::TexturedGeometry::from_shape(&display, shape);
+    let sprite_tex_geo = data::TexturedGeometry::from_shape(&display, shape, &pal);
 
     let ortho = M::ortho(0f32, WIDTH as f32, HEIGHT as f32, 0f32, 0f32, 1000f32);
 
     let uniforms = uniform! {
         mOrtho: ortho,
-        palette: tex_palette.sampled()
-            .magnify_filter(MagnifySamplerFilter::Nearest)
-            .minify_filter(MinifySamplerFilter::Nearest),
         spriteData: sprite_tex_geo.tex.sampled()
             .magnify_filter(MagnifySamplerFilter::Nearest)
             .minify_filter(MinifySamplerFilter::Nearest),
-        isDebug: matches.is_present("debug"),
     };
 
     let vertex_buffer = VertexBuffer::new(&display, &sprite_tex_geo.geo.into_vertices()).unwrap();

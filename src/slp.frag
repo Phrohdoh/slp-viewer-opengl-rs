@@ -3,24 +3,19 @@
 in vec2 vTexCoord;
 
 uniform usampler2D spriteData;
-uniform sampler1D palette;
-uniform bool isDebug;
 
 out vec4 color;
 
 void main() {
-    uint index = texture(spriteData, vTexCoord).r;
-    int i = int(index);
+    uvec4 rgba = texture(spriteData, vTexCoord);
 
-    if (i == 0) {
+    if (rgba.a == uint(0)) {
         discard;
-    } else if (i == 1) {
-        color = vec4(0.0, 0.0, 0.0, 0.75);
     } else {
-        if (isDebug) {
-            color = vec4(float(index)/255.0, 0.0, 0.0, 1.0);
-        } else {
-            color = texelFetch(palette, i, 0);
-        }
+        float r = float(rgba.r) / 255.0;
+        float g = float(rgba.g) / 255.0;
+        float b = float(rgba.b) / 255.0;
+        float a = float(rgba.a) / 255.0;
+        color = vec4(r, g, b, a);
     }
 }

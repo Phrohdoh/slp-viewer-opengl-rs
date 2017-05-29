@@ -13,5 +13,4 @@ itertools = "0.6"
 
 
 [dependencies.chariot_slp]
-git = "https://github.com/ChariotEngine/Slp.git"
-branch = "wip-draw-commands"
+path = "../../chariot_slp"

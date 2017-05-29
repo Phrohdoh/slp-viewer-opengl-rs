@@ -5,7 +5,7 @@ dependencies = [
  "chariot_drs 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "chariot_io_tools 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "chariot_palette 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "chariot_slp 0.1.2 (git+https://github.com/ChariotEngine/Slp.git?branch=wip-draw-commands)",
+ "chariot_slp 0.1.2",
  "clap 2.24.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "glium 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -127,7 +127,6 @@ dependencies = [
 [[package]]
 name = "chariot_slp"
 version = "0.1.2"
-source = "git+https://github.com/ChariotEngine/Slp.git?branch=wip-draw-commands#d83a4684deb6f9a71759b105c9c9de6889f43f1b"
 dependencies = [
  "chariot_io_tools 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -751,7 +750,6 @@ dependencies = [
 "checksum chariot_drs 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "d256e13a18dcfbb13afa0889d0673f3b5bfc2e9597190703d3d83e4b32b2c5af"
 "checksum chariot_io_tools 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "e76a10add966191bd7960b13cd4fc15f3d83ea953f4a2f79c9cb8facdf3308cc"
 "checksum chariot_palette 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "a69ee5ce4638cd53d9aa4609d40c38d9ae6cf0b657e0158d4882ab7c3b3045c0"
-"checksum chariot_slp 0.1.2 (git+https://github.com/ChariotEngine/Slp.git?branch=wip-draw-commands)" = "<none>"
 "checksum clap 2.24.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6b8f69e518f967224e628896b54e41ff6acfb4dcfefc5076325c36525dac900f"
 "checksum cocoa 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "3afe4613f57a171039a98db1773f5840b5743cf85aaf03afb65ddfade4f4a9db"
 "checksum cocoa 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "1e1be5fd98bb7e8ef0eea233a4984f4e85ecdcfa002a90b8b12b7a20faf44dc1"

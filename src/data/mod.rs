@@ -1,4 +1,4 @@
-use {chariot_slp, glium, MipmapsOption, UnsignedTexture2d, UncompressedUintFormat};
+use {chariot_slp, chariot_palette, glium, MipmapsOption, UnsignedTexture2d, UncompressedUintFormat};
 
 implement_vertex!(Vertex, pos, uv);
 
@@ -35,26 +35,50 @@ pub struct TexturedGeometry {
     pub geo: Quad,
 }
 
+type RgbaU8 = (u8, u8, u8, u8);
+fn convert_shape_to_rgba(shape: chariot_slp::SlpLogicalShape, palette: &[(u8, u8, u8)]) -> Vec<RgbaU8> {
+    use chariot_slp::DrawCommand::*;
+
+    let mut ret = Vec::new();
+    for (palette_index, draw_cmd) in shape.pixels.iter().zip(&shape.commands) {
+        match *draw_cmd {
+            Skip => ret.push((0, 0, 0, 0)),
+            Shadow => ret.push((0, 0, 0, 100)),
+            Remap //=> ret.push((0, 0, 0, 254)),
+            |
+            Color => {
+                let (r, g, b) = palette[*palette_index as usize];
+                ret.push((r, g, b, 255));
+            }
+        }
+    }
+
+    ret
+}
+
 impl TexturedGeometry {
     pub fn from_shape(display_ref: &glium::backend::glutin_backend::GlutinFacade,
-                      shape: chariot_slp::SlpLogicalShape)
+                      shape: chariot_slp::SlpLogicalShape,
+                      palette: &[(u8, u8, u8)])
                       -> Self {
-        let sprite_data: Vec<Vec<_>> = shape
-            .pixels
-            .chunks(shape.header.width as usize)
+        let width = shape.header.width;
+        let height = shape.header.height;
+
+        let sprite_data: Vec<Vec<_>> = convert_shape_to_rgba(shape, palette)
+            .chunks(width as usize)
             .map(|x| x.to_owned())
             .collect();
 
         Self {
             tex: UnsignedTexture2d::with_format(display_ref,
                                                 sprite_data,
-                                                UncompressedUintFormat::U8,
+                                                UncompressedUintFormat::U8U8U8U8,
                                                 MipmapsOption::NoMipmap)
                     .expect("TODO: result"),
             geo: Quad::new(0.0,
                            0.0,
-                           shape.header.width as f32,
-                           shape.header.height as f32),
+                           width as f32,
+                           height as f32),
         }
     }
 }
