@@ -6,8 +6,12 @@ version = "0.1.0"
 [dependencies]
 chariot_drs = "0.1"
 chariot_palette = "0.1"
-chariot_slp = "0.1"
 chariot_io_tools = "0.1"
 clap = "2.24"
 glium = "0.16"
 itertools = "0.6"
+
+
+[dependencies.chariot_slp]
+git = "https://github.com/ChariotEngine/Slp.git"
+branch = "wip-draw-commands"
