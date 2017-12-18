@@ -11,5 +11,5 @@ MIT
 Assuming you have [extracted an SLP and a palette from graphics.drs](https://github.com/ChariotEngine/drs-studio/):
 
 ```sh
-$ cargo run -- --pal-path ~/Desktop/50500.bin --player 1 --slp-path ~/Desktop/00412.slp
+$ cargo run -- --pal-path 50500.bin --player 1 --slp-path 00412.slp --frame-index 34
 ```
