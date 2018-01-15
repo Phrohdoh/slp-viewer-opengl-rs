@@ -13,8 +13,13 @@ use glium::uniforms::{MinifySamplerFilter, MagnifySamplerFilter};
 extern crate clap;
 use clap::{App, Arg};
 
+extern crate itertools;
+use itertools::Itertools;
+
 extern crate chariot_palette;
 extern crate chariot_slp;
+
+use chariot_slp::DrawCommand;
 
 struct M {
     m11: f32, m12: f32, m13: f32, m14: f32,
@@ -175,6 +180,20 @@ fn main() {
                 .expect("Failed to create tex_sprite")
     };
 
+    let tex_sprite_cmds = {
+        let data: Vec<Vec<u8>> = shape
+            .commands
+            .chunks(shape.header.width as usize)
+            .map(|chunk| chunk.into_iter().map(|cmd| cmd.to_u8()).collect::<Vec<_>>())
+            .collect();
+
+        UnsignedTexture2d::with_format(&display,
+                                       data,
+                                       UncompressedUintFormat::U8,
+                                       MipmapsOption::NoMipmap)    
+                .expect("Failed to create tex_sprite_cmds")
+    };
+
     let ortho = M::ortho(0f32, WIDTH as f32, HEIGHT as f32, 0f32, 0f32, 1000f32);
 
     let uniforms = uniform! {
@@ -183,6 +202,9 @@ fn main() {
             .magnify_filter(MagnifySamplerFilter::Nearest)
             .minify_filter(MinifySamplerFilter::Nearest),
         spriteData: tex_sprite.sampled()
+            .magnify_filter(MagnifySamplerFilter::Nearest)
+            .minify_filter(MinifySamplerFilter::Nearest),
+        spriteCmds: tex_sprite_cmds.sampled()
             .magnify_filter(MagnifySamplerFilter::Nearest)
             .minify_filter(MinifySamplerFilter::Nearest),
     };
@@ -197,11 +219,20 @@ fn main() {
                                         PrimitiveType::TrianglesList,
                                         &[0u16, 1, 2, 0, 2, 3]).unwrap();
 
-    let program = program!(&display, 330 => { vertex: include_str!("slp.vert"), fragment: include_str!("slp.frag"), }).unwrap();
+    let program = match program!(&display, 330 => {
+        vertex: include_str!("slp.vert"),
+        fragment: include_str!("slp.frag"),
+    }) {
+        Ok(p) => p,
+        Err(e) => {
+            println!("{:?}", e);
+            std::process::exit(1);
+        },
+    };
 
     'main: loop {
         let mut target = display.draw();
-        target.clear_color(0.0, 0.0, 0.0, 1.0);
+        target.clear_color(0.0, 1.0, 0.0, 1.0);
         target
             .draw(&vertex_buffer,
                   &index_buffer,
