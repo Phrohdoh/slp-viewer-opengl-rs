@@ -119,6 +119,10 @@ fn main() {
                  .possible_values(&["1", "2", "3", "4", "5", "6", "7", "8"])
                  .required(true)
                  .takes_value(true))
+        .arg(Arg::with_name("debug")
+                 .long("debug")
+                 .display_order(5)
+                 .help("If set use the debug shaders"))
         .get_matches();
 
     let shape = {
@@ -219,9 +223,15 @@ fn main() {
                                         PrimitiveType::TrianglesList,
                                         &[0u16, 1, 2, 0, 2, 3]).unwrap();
 
+    let frag_src = if matches.is_present("debug") {
+        include_str!("debug_slp.frag")
+    } else {
+        include_str!("slp.frag")
+    };
+
     let program = match program!(&display, 330 => {
         vertex: include_str!("slp.vert"),
-        fragment: include_str!("slp.frag"),
+        fragment: frag_src,
     }) {
         Ok(p) => p,
         Err(e) => {
@@ -232,7 +242,7 @@ fn main() {
 
     'main: loop {
         let mut target = display.draw();
-        target.clear_color(0.0, 1.0, 0.0, 1.0);
+        target.clear_color(0.1, 0.1, 0.1, 1.0);
         target
             .draw(&vertex_buffer,
                   &index_buffer,
